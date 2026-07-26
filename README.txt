@@ -198,9 +198,3 @@ Parser.lua                tokens and classification, tune wording here
 Core.lua                  capture, storage, filters, slash commands
 Alerts.lua                on screen notification
 UI.lua                    window, table, editing, player menu, minimap
-
-NOTE ON AI CLASSIFICATION
-Not included on purpose. A 3.3.5a client cannot make HTTPS calls, an API key
-in SavedVariables is exposed, and results cannot be pushed back into a
-running addon without an external companion. Local parsing is instant, free
-and private, and the token tables in Parser.lua are the faster thing to tune.
