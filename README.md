@@ -4,6 +4,19 @@ A chat scanner for **World of Warcraft 3.3.5a**, built for **Project Ascension**
 
 It reads every chat channel you have enabled, recognises Manastorm group posts, works out whether the sender wants to **join** a group or **fill** one, pulls out role, aura, heirlooms and level where the text mentions them, and lets you whisper, invite or inspect anyone straight from the row.
 
+> ## ⚠ THE FOLDER MUST BE NAMED `ManastormGroupFinder`
+>
+> **If you downloaded the source code, the extracted folder is called `ManastormGroupFinder-main` or `ManastormGroupFinder-2.3`. RENAME IT TO `ManastormGroupFinder` before putting it in your AddOns folder, or the game will silently ignore it and it will not appear in your addon list.**
+>
+> The client requires the folder name to match `ManastormGroupFinder.toc`. Any suffix breaks it.
+>
+> **[Grab the zip from the Releases page](../../releases) instead and this cannot happen** — it already extracts with the correct name.
+>
+> ```
+> Interface\AddOns\ManastormGroupFinder\ManastormGroupFinder.toc   ✔ loads
+> Interface\AddOns\ManastormGroupFinder-2.3\ManastormGroupFinder.toc   ✘ ignored
+> ```
+
 ![The LFG tab](docs/window-lfg.png)
 
 ---
@@ -52,6 +65,8 @@ Manastorm groups form entirely through chat. Dozens of `LF MS15 DPS AURA` and `L
 ---
 
 ## Installation
+
+**The folder must be named exactly `ManastormGroupFinder` — no version number, no `-main` suffix. Rename it if yours has one.**
 
 1. Download the latest **`ManastormGroupFinder.zip`** from the [Releases](../../releases) page.
 2. Extract it. You should get a single folder named exactly `ManastormGroupFinder` containing `ManastormGroupFinder.toc` and four `.lua` files.

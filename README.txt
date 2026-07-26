@@ -1,6 +1,17 @@
 Manastorm Group Finder 2.3
 WoW 3.3.5a clients, including Project Ascension.
 
+*** THE FOLDER MUST BE NAMED  ManastormGroupFinder  ***
+If you downloaded the source code, your extracted folder is called
+ManastormGroupFinder-main or ManastormGroupFinder-2.3. RENAME IT to
+ManastormGroupFinder before putting it in Interface\AddOns, or the game
+silently ignores it and it never shows up in your addon list. The client
+requires the folder name to match ManastormGroupFinder.toc, so any suffix
+breaks it. The zip from the Releases page already has the right name.
+
+  Interface\AddOns\ManastormGroupFinder\ManastormGroupFinder.toc      loads
+  Interface\AddOns\ManastormGroupFinder-2.3\ManastormGroupFinder.toc  ignored
+
 WHY 1.0 FOUND NOTHING
 This build captures chat twice. It registers the chat events, and it also
 hooks the chat display filters, so it reads exactly what your chat frame
@@ -17,6 +28,8 @@ IF IT STILL LISTS NOTHING
 Send me those two outputs and the fix is immediate.
 
 INSTALL
+The folder must be named exactly ManastormGroupFinder, no version number and
+no -main suffix. Rename it first if yours has one.
 Copy the ManastormGroupFinder folder into
    <game folder>\Interface\AddOns\ManastormGroupFinder
 so that ManastormGroupFinder.toc sits directly inside it. Then /reload or
@@ -198,9 +211,3 @@ Parser.lua                tokens and classification, tune wording here
 Core.lua                  capture, storage, filters, slash commands
 Alerts.lua                on screen notification
 UI.lua                    window, table, editing, player menu, minimap
-
-NOTE ON AI CLASSIFICATION
-Not included on purpose. A 3.3.5a client cannot make HTTPS calls, an API key
-in SavedVariables is exposed, and results cannot be pushed back into a
-running addon without an external companion. Local parsing is instant, free
-and private, and the token tables in Parser.lua are the faster thing to tune.
