@@ -1,0 +1,15 @@
+# Built release archives
+release/*.zip
+*.zip
+
+# Editors and OS junk
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.vscode/
+.idea/
+
+# WoW saved variables, never commit these
+WTF/
+*.lua.bak
