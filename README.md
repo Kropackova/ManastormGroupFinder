@@ -8,15 +8,10 @@ It reads every chat channel you have enabled, recognises Manastorm group posts, 
 >
 > **Download [`ManastormGroupFinder.zip` from the Releases page](../../releases) — the file listed under *Assets*, NOT "Source code (zip)".** That one extracts with the correct folder name and needs no renaming.
 >
-> **Anything else — "Source code (zip)", the green Code button, a tag download — gives you a folder called `ManastormGroupFinder-2.3` or `ManastormGroupFinder-main`. RENAME IT TO `ManastormGroupFinder` before putting it in your AddOns folder, or the game silently ignores it and it never appears in your addon list.**
+> **Anything else — "Source code (zip)", the green Code button, a tag download — gives you a folder called `ManastormGroupFinder-2.5` or `ManastormGroupFinder-main`. RENAME IT TO `ManastormGroupFinder` before putting it in your AddOns folder, or the game silently ignores it and it never appears in your addon list.**
 >
 > The client requires the folder name to match `ManastormGroupFinder.toc`, so any suffix breaks it.
->
-> ```
-> Interface\AddOns\ManastormGroupFinder\ManastormGroupFinder.toc      ✔ loads
-> Interface\AddOns\ManastormGroupFinder-2.3\ManastormGroupFinder.toc  ✘ ignored
-> Interface\AddOns\ManastormGroupFinder-main\ManastormGroupFinder.toc ✘ ignored
-> ```
+
 
 ![The LFG tab](docs/window-lfg.png)
 
