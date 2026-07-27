@@ -6,16 +6,10 @@ It reads every chat channel you have enabled, recognises Manastorm group posts, 
 
 > ## ⚠ THE FOLDER MUST BE NAMED `ManastormGroupFinder`
 >
-> **If you downloaded the source code, the extracted folder is called `ManastormGroupFinder-main` or `ManastormGroupFinder-2.3`. RENAME IT TO `ManastormGroupFinder` before putting it in your AddOns folder, or the game will silently ignore it and it will not appear in your addon list.**
+> **[Grab the ManastormGroupFinder.zip from the Releases page](../../releases)** — it already extracts with the correct name.
 >
-> The client requires the folder name to match `ManastormGroupFinder.toc`. Any suffix breaks it.
->
-> **[Grab the zip from the Releases page](../../releases) instead and this cannot happen** — it already extracts with the correct name.
->
-> ```
-> Interface\AddOns\ManastormGroupFinder\ManastormGroupFinder.toc   ✔ loads
-> Interface\AddOns\ManastormGroupFinder-2.3\ManastormGroupFinder.toc   ✘ ignored
-> ```
+> 
+>**If you downloaded the source code, the extracted folder is called `ManastormGroupFinder-main` or `ManastormGroupFinder-2.3`. RENAME IT TO `ManastormGroupFinder` before putting it in your AddOns folder, or the game will silently ignore it and it will not appear in your addon list.**
 
 ![The LFG tab](docs/window-lfg.png)
 
