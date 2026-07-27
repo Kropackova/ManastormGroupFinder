@@ -1,8 +1,8 @@
--- Manastorm Group Finder 2.5
+-- Manastorm Group Finder 2.6
 -- Parser.lua - normalization, token tables, classification. No game API here.
 
 MSGF = MSGF or {}
-MSGF.VERSION = "2.5"
+MSGF.VERSION = "2.6"
 
 local function trim(s)
 	s = s:gsub("^%s+", "")

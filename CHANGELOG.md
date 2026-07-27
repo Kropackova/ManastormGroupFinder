@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.6
+
+- Fixed the whisper panel: the LFG template box drew without its background because the stock input box art only rendered on the first box. Both boxes are now built with their own solid backdrop and look identical.
+- Clearer labels: *LFM tab - sent to a player leading a group looking for players*, *LFG tab - sent to a player who is looking for a group*.
+- Removed `{myrole}` from the placeholder legend. It was never implemented, because Ascension characters are classless and nothing in the API states your intended role.
+
 ## 2.5
 
 - New **W** column between **Lvl** and **Message**. Left click sends your saved whisper to that player at once, and the cell then reads `sent` in green.

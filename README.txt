@@ -89,8 +89,8 @@ WHISPER BUTTON
 
   Press the "Whisper..." button at the bottom of the window to write the
   lines, or use /msgf whisper. There is one line per tab:
-    LFM tab - what you say to a leader who is filling a group
-    LFG tab - what you say to a player who wants a group
+    LFM tab - sent to a player leading a group looking for players
+    LFG tab - sent to a player who is looking for a group
 
   Placeholders are replaced at the moment you click:
     {name}    the listed player

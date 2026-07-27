@@ -191,8 +191,8 @@ Each row carries a narrow **W** cell between **Lvl** and **Message**. Left click
 
 Write the lines with the **Whisper...** button at the bottom of the window, or `/msgf whisper`. There is one line per tab, because the two situations need different wording:
 
-- **LFM tab** - what you say to a leader who is filling a group
-- **LFG tab** - what you say to a player who wants a group
+- **LFM tab** - sent to a player leading a group looking for players
+- **LFG tab** - sent to a player who is looking for a group
 
 Placeholders are filled in at the moment you click:
 

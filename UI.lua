@@ -1,4 +1,4 @@
--- Manastorm Group Finder 2.5
+-- Manastorm Group Finder 2.6
 -- UI.lua - window, table, editing, player menu, filters, whisper, minimap button.
 
 MSGF = MSGF or {}
@@ -63,7 +63,7 @@ local SKINS = {
 }
 
 local frame, headerBar, tableArea, scrollBar, countText, titleText, subText
-local filtersButton, alertsButton, clearButton, resizeGrip
+local filtersButton, alertsButton, clearButton, whisperButton, resizeGrip
 local filterPanel, clickCatcher, menuFrame, copyFrame, levelEdit
 local headers, rows, tabs, seps = {}, {}, {}, {}
 local currentList = {}
@@ -549,13 +549,27 @@ end
 
 local whisperPanel
 
+-- Built without the stock input box art, which only drew its stretched middle
+-- piece on the first box. Own backdrop, so both boxes look the same.
 local function makeTemplateBox(parent, y, maxLetters)
-	local box = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
+	local box = CreateFrame("EditBox", nil, parent)
 	box:SetPoint("TOPLEFT", parent, "TOPLEFT", 22, y)
 	box:SetWidth(410)
-	box:SetHeight(20)
+	box:SetHeight(22)
 	box:SetAutoFocus(false)
 	box:SetMaxLetters(maxLetters or 200)
+	box:SetFontObject("ChatFontNormal")
+	box:SetTextColor(1, 1, 1)
+	box:SetTextInsets(6, 6, 0, 0)
+	box:SetBackdrop({
+		bgFile = "Interface\\Buttons\\WHITE8X8",
+		edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+		tile = true, tileSize = 16, edgeSize = 12,
+		insets = { left = 3, right = 3, top = 3, bottom = 3 },
+	})
+	box:SetBackdropColor(0, 0, 0, 0.9)
+	box:SetBackdropBorderColor(0.45, 0.45, 0.52, 1)
+	box:EnableMouse(true)
 	box:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
 	return box
 end
@@ -599,12 +613,12 @@ local function createWhisperPanel()
 
 	local lfmLabel = whisperPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	lfmLabel:SetPoint("TOPLEFT", 20, -44)
-	lfmLabel:SetText("LFM tab - sent to a leader who is filling a group")
+	lfmLabel:SetText("LFM tab - sent to a player leading a group looking for players")
 	whisperPanel.lfmBox = makeTemplateBox(whisperPanel, -60)
 
 	local lfgLabel = whisperPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	lfgLabel:SetPoint("TOPLEFT", 20, -92)
-	lfgLabel:SetText("LFG tab - sent to a player who wants a group")
+	lfgLabel:SetText("LFG tab - sent to a player who is looking for a group")
 	whisperPanel.lfgBox = makeTemplateBox(whisperPanel, -108)
 
 	local tokens = whisperPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
@@ -612,7 +626,7 @@ local function createWhisperPanel()
 	tokens:SetWidth(420)
 	tokens:SetJustifyH("LEFT")
 	tokens:SetText("Placeholders, filled in when you click: {name} {role} {level} {aura}"
-		.. " {looms} {size} for the listed player, {myname} {mylevel} {myrole} for you.")
+		.. " {looms} {size} for the listed player, {myname} {mylevel} for you.")
 
 	local note = whisperPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 	note:SetPoint("TOPLEFT", 22, -184)
