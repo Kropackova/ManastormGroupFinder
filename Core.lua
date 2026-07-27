@@ -1,5 +1,5 @@
--- Manastorm Group Finder 2.0
--- Core.lua - chat capture, storage, filters, slash commands.
+-- Manastorm Group Finder 2.5
+-- Core.lua - chat capture, storage, filters, whisper templates, slash commands.
 
 MSGF = MSGF or {}
 
@@ -29,6 +29,11 @@ local DEFAULTS = {
 		word = "",
 	},
 	alert = { enabled = false, sound = true, chat = false, popup = true, mode = "ANY" },
+	-- One line per tab, sent only when you click the W cell in a row.
+	whisper = {
+		lfm = "Hi {name}, lvl {mylevel} dps with looms and aura, room in your MS?",
+		lfg = "Hi {name}, i have a MS group going, want an invite?",
+	},
 	rows = { LFM = {}, LFG = {}, UNSURE = {} },
 }
 
@@ -546,6 +551,8 @@ local function printHelp()
 		"/msgf own - include or exclude your own messages",
 		"/msgf debug - log every scanned chat line",
 		"/msgf stats - capture counters and last error",
+		"/msgf whisper - set the one click whisper line for each tab",
+		"/msgf whisper lfm <text> - set the LFM line, lfg <text> for the LFG line",
 		"/msgf test <message> - parse a line without sending it",
 	}
 	for i = 1, #lines do
@@ -596,6 +603,98 @@ local function handleAlert(rest)
 	end
 end
 
+-- Whisper templates ---------------------------------------------------------
+
+function MSGF.WhisperTemplate(bucket)
+	if not MSGF_DB or not MSGF_DB.whisper then
+		return ""
+	end
+	if bucket == "LFG" then
+		return MSGF_DB.whisper.lfg or ""
+	end
+	return MSGF_DB.whisper.lfm or ""
+end
+
+function MSGF.SetWhisperTemplate(bucket, text)
+	if not MSGF_DB then
+		return
+	end
+	MSGF_DB.whisper = MSGF_DB.whisper or {}
+	if bucket == "LFG" then
+		MSGF_DB.whisper.lfg = text or ""
+	else
+		MSGF_DB.whisper.lfm = text or ""
+	end
+end
+
+-- Placeholders are replaced at click time, never before.
+function MSGF.BuildWhisper(row, bucket)
+	if not row then
+		return nil
+	end
+	local text = MSGF.WhisperTemplate(bucket or MSGF.GetMode())
+	if not text or text == "" then
+		return nil
+	end
+	local values = {
+		name = row.name or "",
+		role = row.roleText or "?",
+		level = row.level and tostring(row.level) or "?",
+		aura = row.aura or "no",
+		looms = row.looms or "no",
+		size = row.size and tostring(row.size) or "?",
+		myname = UnitName("player") or "",
+		mylevel = tostring(UnitLevel("player") or 0),
+	}
+	text = text:gsub("{(%a+)}", function(key)
+		local value = values[key:lower()]
+		if value == nil then
+			return "{" .. key .. "}"
+		end
+		return value
+	end)
+	return text
+end
+
+function MSGF.SendWhisper(row, bucket)
+	if not row or not row.name or row.name == "" then
+		return false
+	end
+	local text = MSGF.BuildWhisper(row, bucket)
+	if not text or text == "" then
+		MSGF.Print("no whisper line set for this tab - press the Whisper button in the window, or use /msgf whisper lfm <text>")
+		return false
+	end
+	if text:len() > 250 then
+		text = text:sub(1, 250)
+	end
+	SendChatMessage(text, "WHISPER", nil, row.name)
+	row.whispered = time()
+	if MSGF.Refresh then
+		MSGF.Refresh()
+	end
+	return true
+end
+
+local function handleWhisper(rest)
+	local sub, text = rest:match("^(%S*)%s*(.*)$")
+	sub = (sub or ""):lower()
+	if sub == "" then
+		if MSGF.ShowWhisperSetup then
+			MSGF.ShowWhisperSetup()
+		end
+	elseif sub == "lfm" or sub == "lfg" then
+		if text == "" then
+			MSGF.Print(sub .. " line: " .. (MSGF.WhisperTemplate(sub:upper()) or ""))
+		else
+			MSGF.SetWhisperTemplate(sub:upper(), text)
+			MSGF.Print(sub .. " line saved: " .. text)
+		end
+	else
+		MSGF.Print("use /msgf whisper to open the setup, or /msgf whisper lfm <text>")
+	end
+end
+
 SLASH_MANASTORMGF1 = "/msgf"
 SLASH_MANASTORMGF2 = "/manastorm"
 SlashCmdList["MANASTORMGF"] = function(msg)
@@ -633,6 +732,8 @@ SlashCmdList["MANASTORMGF"] = function(msg)
 		MSGF.Print("minimap button " .. (MSGF_DB.minimap.show and "shown" or "hidden"))
 	elseif cmd == "alert" then
 		handleAlert(rest)
+	elseif cmd == "whisper" then
+		handleWhisper(rest)
 	elseif cmd == "expiry" then
 		local v = tonumber(rest)
 		if v and v >= 60 then

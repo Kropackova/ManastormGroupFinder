@@ -1,8 +1,8 @@
--- Manastorm Group Finder 2.3
+-- Manastorm Group Finder 2.5
 -- Parser.lua - normalization, token tables, classification. No game API here.
 
 MSGF = MSGF or {}
-MSGF.VERSION = "2.3"
+MSGF.VERSION = "2.5"
 
 local function trim(s)
 	s = s:gsub("^%s+", "")
@@ -103,6 +103,13 @@ function MSGF.MarkSize(t)
 		keep(n)
 		return " size" .. n .. " man "
 	end)
+	-- Spelled out small groups.
+	if t:find(" duo ", 1, true) then
+		keep(2)
+	end
+	if t:find(" trio ", 1, true) then
+		keep(3)
+	end
 	return t, size
 end
 
@@ -318,6 +325,51 @@ local function lfKindOf(w)
 	return nil
 end
 
+-- What the looking-for token points at. "lf ms" and "lf group" mean the
+-- sender wants a group and any role named afterwards describes the sender.
+-- "lf dps" and "lf 2 tanks" mean the sender is filling a group. This beats
+-- the role-position rule, because "lf ms dps" puts the role after the token
+-- while still being an offer.
+local GROUP_OBJECTS = {
+	["group"] = true, ["grp"] = true, ["grup"] = true, ["gruop"] = true,
+	["grupe"] = true, ["gruppe"] = true, ["party"] = true, ["pt"] = true,
+	["raid"] = true, ["run"] = true, ["team"] = true, ["farm"] = true,
+	["farming"] = true, ["spam"] = true, ["spamm"] = true, ["loop"] = true,
+	["push"] = true, ["carry"] = true, ["leveling"] = true,
+	["levelling"] = true, ["lvling"] = true, ["lvls"] = true,
+	["duo"] = true, ["trio"] = true, ["ms"] = true, ["mss"] = true,
+	["msing"] = true, ["manastorm"] = true, ["manastorms"] = true,
+	["mstorm"] = true, ["manastrom"] = true, ["manstorm"] = true,
+}
+
+-- Words that carry no meaning between the token and its object.
+local OBJECT_FILLERS = {
+	["a"] = true, ["an"] = true, ["the"] = true, ["for"] = true,
+	["some"] = true, ["any"] = true, ["to"] = true, ["in"] = true,
+	["on"] = true, ["of"] = true, ["fast"] = true, ["quick"] = true,
+	["new"] = true, ["good"] = true, ["big"] = true, ["giga"] = true,
+	["chill"] = true, ["active"] = true,
+}
+
+local function lfObjectIsGroup(list, at)
+	for i = at + 1, math.min(at + 4, #list) do
+		local w = list[i]
+		if w:match("^size%d+$") or OBJECT_FILLERS[w] then
+			-- Skip and keep reading.
+		elseif roleAt(w) then
+			return false
+		elseif w:match("^%d+$") then
+			return false
+		elseif GROUP_OBJECTS[w] or w:match("^ms%d+s?$")
+			or w:match("^manastorm%d+$") or w:match("^mstorm%d+$") then
+			return true
+		else
+			return false
+		end
+	end
+	return false
+end
+
 -- A wanted headcount, not a level. Only small numbers count as a headcount
 -- unless the text spells it out with m, more or a spot.
 function MSGF.RecruitCount(t)
@@ -407,8 +459,16 @@ function MSGF.Classify(t)
 		return leader and "LFM" or "LFG"
 	end
 
-	-- 6. Bare lf: decide by which side the roles sit on.
+	-- 6. Bare lf: what the token points at wins, then role position.
 	if kind == "lf" then
+		-- "lf ms", "lf ms dps", "lf group", "searching for ms": the sender
+		-- wants the group, so a role afterwards describes the sender.
+		if lfObjectIsGroup(list, firstLF) then
+			if count or leader or t:find("%d+by%d+") then
+				return "LFM"
+			end
+			return "LFG"
+		end
 		if countAfter >= 2 then
 			return "LFM"
 		end

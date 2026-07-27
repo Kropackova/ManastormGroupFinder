@@ -1,5 +1,5 @@
--- Manastorm Group Finder 2.0
--- UI.lua - window, table, editing, player menu, filters, minimap button.
+-- Manastorm Group Finder 2.5
+-- UI.lua - window, table, editing, player menu, filters, whisper, minimap button.
 
 MSGF = MSGF or {}
 
@@ -15,6 +15,7 @@ local COLS = {
 	{ key = "aura",    label = "Aura",    w = 66,  edit = true },
 	{ key = "looms",   label = "Looms",   w = 72,  edit = true },
 	{ key = "level",   label = "Lvl",     w = 40,  edit = true },
+	{ key = "wsp",     label = "W",       w = 26,  whisper = true },
 	{ key = "message", label = "Message", w = 260, flex = true },
 }
 
@@ -328,6 +329,13 @@ local function paintRow(row, data, index)
 		cells.level:SetTextColor(0.85, 0.85, 0.85)
 	end
 
+	-- The whisper cell is a one click send, so show plainly when it was used.
+	if data.whispered then
+		cells.wsp:SetText("|cff40ff90sent|r")
+	else
+		cells.wsp:SetText("|cffffd200>>|r")
+	end
+
 	cells.message:SetText(data.message or "")
 	cells.message:SetTextColor(0.8, 0.82, 0.88)
 
@@ -513,6 +521,10 @@ local function onRowClick(row, button)
 		return
 	end
 	local col = columnAt(row)
+	if col and col.whisper then
+		MSGF.SendWhisper(data, MSGF.GetMode())
+		return
+	end
 	if not col or not col.edit then
 		return
 	end
@@ -531,6 +543,121 @@ local function onRowClick(row, button)
 		return
 	end
 	MSGF.Refresh()
+end
+
+-- Whisper setup -------------------------------------------------------------
+
+local whisperPanel
+
+local function makeTemplateBox(parent, y, maxLetters)
+	local box = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
+	box:SetPoint("TOPLEFT", parent, "TOPLEFT", 22, y)
+	box:SetWidth(410)
+	box:SetHeight(20)
+	box:SetAutoFocus(false)
+	box:SetMaxLetters(maxLetters or 200)
+	box:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+	return box
+end
+
+local function saveWhisperPanel()
+	if not whisperPanel then
+		return
+	end
+	MSGF.SetWhisperTemplate("LFM", whisperPanel.lfmBox:GetText() or "")
+	MSGF.SetWhisperTemplate("LFG", whisperPanel.lfgBox:GetText() or "")
+	MSGF.Print("whisper templates saved")
+end
+
+local function createWhisperPanel()
+	whisperPanel = CreateFrame("Frame", "MSGF_WhisperPanel", UIParent)
+	whisperPanel:SetWidth(470)
+	whisperPanel:SetHeight(266)
+	whisperPanel:SetPoint("CENTER")
+	whisperPanel:SetFrameStrata("FULLSCREEN_DIALOG")
+	whisperPanel:SetBackdrop({
+		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+		tile = true, tileSize = 32, edgeSize = 24,
+		insets = { left = 8, right = 8, top = 8, bottom = 8 },
+	})
+	whisperPanel:EnableMouse(true)
+	whisperPanel:SetMovable(true)
+	whisperPanel:RegisterForDrag("LeftButton")
+	whisperPanel:SetScript("OnDragStart", function(self) self:StartMoving() end)
+	whisperPanel:SetScript("OnDragStop", function(self) self:StopMovingOrSizing() end)
+
+	-- Solid backing so chat behind the panel cannot be read through it.
+	local solid = whisperPanel:CreateTexture(nil, "BORDER")
+	solid:SetTexture(0.04, 0.04, 0.05, 1)
+	solid:SetPoint("TOPLEFT", 7, -7)
+	solid:SetPoint("BOTTOMRIGHT", -7, 7)
+
+	local title = whisperPanel:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+	title:SetPoint("TOPLEFT", 20, -18)
+	title:SetText("Whisper templates")
+
+	local lfmLabel = whisperPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	lfmLabel:SetPoint("TOPLEFT", 20, -44)
+	lfmLabel:SetText("LFM tab - sent to a leader who is filling a group")
+	whisperPanel.lfmBox = makeTemplateBox(whisperPanel, -60)
+
+	local lfgLabel = whisperPanel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+	lfgLabel:SetPoint("TOPLEFT", 20, -92)
+	lfgLabel:SetText("LFG tab - sent to a player who wants a group")
+	whisperPanel.lfgBox = makeTemplateBox(whisperPanel, -108)
+
+	local tokens = whisperPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+	tokens:SetPoint("TOPLEFT", 22, -138)
+	tokens:SetWidth(420)
+	tokens:SetJustifyH("LEFT")
+	tokens:SetText("Placeholders, filled in when you click: {name} {role} {level} {aura}"
+		.. " {looms} {size} for the listed player, {myname} {mylevel} {myrole} for you.")
+
+	local note = whisperPanel:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+	note:SetPoint("TOPLEFT", 22, -184)
+	note:SetWidth(420)
+	note:SetJustifyH("LEFT")
+	note:SetText("Nothing is sent automatically. The W column in each row sends the"
+		.. " template for the tab you are on, once per click.")
+
+	local save = CreateFrame("Button", nil, whisperPanel, "UIPanelButtonTemplate")
+	save:SetWidth(90)
+	save:SetHeight(22)
+	save:SetPoint("BOTTOMRIGHT", -104, 18)
+	save:SetText("Save")
+	save:SetScript("OnClick", saveWhisperPanel)
+
+	local close = CreateFrame("Button", nil, whisperPanel, "UIPanelButtonTemplate")
+	close:SetWidth(90)
+	close:SetHeight(22)
+	close:SetPoint("BOTTOMRIGHT", -18, 18)
+	close:SetText("Close")
+	close:SetScript("OnClick", function()
+		saveWhisperPanel()
+		whisperPanel:Hide()
+	end)
+
+	whisperPanel.lfmBox:SetScript("OnEnterPressed", function(self)
+		self:ClearFocus()
+		saveWhisperPanel()
+	end)
+	whisperPanel.lfgBox:SetScript("OnEnterPressed", function(self)
+		self:ClearFocus()
+		saveWhisperPanel()
+	end)
+
+	table.insert(UISpecialFrames, "MSGF_WhisperPanel")
+	whisperPanel:Hide()
+end
+
+function MSGF.ShowWhisperSetup()
+	if not whisperPanel then
+		createWhisperPanel()
+	end
+	whisperPanel.lfmBox:SetText(MSGF.WhisperTemplate("LFM") or "")
+	whisperPanel.lfgBox:SetText(MSGF.WhisperTemplate("LFG") or "")
+	whisperPanel:Show()
 end
 
 -- Filters panel -------------------------------------------------------------
@@ -985,6 +1112,15 @@ local function createWindow()
 			else
 				GameTooltip:AddLine("aura and looms on LFG rows are what that player brings", 0.6, 0.6, 0.6)
 			end
+			local preview = MSGF.BuildWhisper and MSGF.BuildWhisper(self.data, MSGF.GetMode())
+			if preview and preview ~= "" then
+				GameTooltip:AddLine("W sends: " .. preview, 0.45, 0.85, 1, true)
+			else
+				GameTooltip:AddLine("no whisper template yet, use the Whisper button", 0.6, 0.6, 0.6)
+			end
+			if self.data.whispered then
+				GameTooltip:AddLine("whispered at " .. date("%H:%M:%S", self.data.whispered), 0.6, 0.6, 0.6)
+			end
 			GameTooltip:AddLine("left click a value to edit, right click for actions", 0.6, 0.6, 0.6)
 			GameTooltip:Show()
 		end)
@@ -1002,13 +1138,30 @@ local function createWindow()
 		MSGF.ClearBucket(MSGF.GetMode())
 	end)
 
+	whisperButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
+	whisperButton:SetWidth(100)
+	whisperButton:SetHeight(20)
+	whisperButton:SetPoint("LEFT", clearButton, "RIGHT", 6, 0)
+	whisperButton:SetText("Whisper...")
+	whisperButton:SetScript("OnClick", function()
+		MSGF.ShowWhisperSetup()
+	end)
+	whisperButton:SetScript("OnEnter", function(self)
+		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+		GameTooltip:AddLine("Whisper templates")
+		GameTooltip:AddLine("Write one line for the LFM tab and one for the LFG tab.", 1, 1, 1)
+		GameTooltip:AddLine("The W column in a row sends it to that player.", 0.7, 0.7, 0.7)
+		GameTooltip:Show()
+	end)
+	whisperButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
 	countText = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
-	countText:SetPoint("BOTTOMLEFT", clearButton, "BOTTOMRIGHT", 10, 5)
+	countText:SetPoint("BOTTOMLEFT", whisperButton, "BOTTOMRIGHT", 10, 5)
 	countText:SetText("")
 
 	local hint = frame:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
 	hint:SetPoint("BOTTOMRIGHT", -PAD - 16, PAD)
-	hint:SetText("Left click a value to edit - right click a row for actions")
+	hint:SetText("Left click a value to edit - W sends your whisper - right click a row for actions")
 
 	resizeGrip = CreateFrame("Button", nil, frame)
 	resizeGrip:SetWidth(16)

@@ -1,0 +1,9 @@
+Save your three screenshots in this docs/ folder with these exact file names,
+lower case, so the links in README.md resolve:
+
+  window-lfg.png   the LFG tab screenshot (the wide table, LFG 38 selected)
+  window-lfm.png   the LFM tab screenshot (Aura req / Looms req headers)
+  filters.png      the open filter panel screenshot
+
+Once all three are here you can delete this file.
+PNG is preferred. Keep them under about 1 MB each so the README loads fast.

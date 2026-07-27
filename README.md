@@ -6,15 +6,16 @@ It reads every chat channel you have enabled, recognises Manastorm group posts, 
 
 > ## ⚠ THE FOLDER MUST BE NAMED `ManastormGroupFinder`
 >
-> **If you downloaded the source code, the extracted folder is called `ManastormGroupFinder-main` or `ManastormGroupFinder-2.3`. RENAME IT TO `ManastormGroupFinder` before putting it in your AddOns folder, or the game will silently ignore it and it will not appear in your addon list.**
+> **Download [`ManastormGroupFinder.zip` from the Releases page](../../releases) — the file listed under *Assets*, NOT "Source code (zip)".** That one extracts with the correct folder name and needs no renaming.
 >
-> The client requires the folder name to match `ManastormGroupFinder.toc`. Any suffix breaks it.
+> **Anything else — "Source code (zip)", the green Code button, a tag download — gives you a folder called `ManastormGroupFinder-2.3` or `ManastormGroupFinder-main`. RENAME IT TO `ManastormGroupFinder` before putting it in your AddOns folder, or the game silently ignores it and it never appears in your addon list.**
 >
-> **[Grab the zip from the Releases page](../../releases) instead and this cannot happen** — it already extracts with the correct name.
+> The client requires the folder name to match `ManastormGroupFinder.toc`, so any suffix breaks it.
 >
 > ```
-> Interface\AddOns\ManastormGroupFinder\ManastormGroupFinder.toc   ✔ loads
-> Interface\AddOns\ManastormGroupFinder-2.3\ManastormGroupFinder.toc   ✘ ignored
+> Interface\AddOns\ManastormGroupFinder\ManastormGroupFinder.toc      ✔ loads
+> Interface\AddOns\ManastormGroupFinder-2.3\ManastormGroupFinder.toc  ✘ ignored
+> Interface\AddOns\ManastormGroupFinder-main\ManastormGroupFinder.toc ✘ ignored
 > ```
 
 ![The LFG tab](docs/window-lfg.png)
@@ -68,7 +69,7 @@ Manastorm groups form entirely through chat. Dozens of `LF MS15 DPS AURA` and `L
 
 **The folder must be named exactly `ManastormGroupFinder` — no version number, no `-main` suffix. Rename it if yours has one.**
 
-1. Download the latest **`ManastormGroupFinder.zip`** from the [Releases](../../releases) page.
+1. Go to the [Releases](../../releases) page and download **`ManastormGroupFinder.zip`** from the **Assets** list. Do not use *Source code (zip)* — that is GitHub's automatic archive of the repository and it unpacks into a folder named after the tag.
 2. Extract it. You should get a single folder named exactly `ManastormGroupFinder` containing `ManastormGroupFinder.toc` and four `.lua` files.
 3. Move that folder into your AddOns directory:
 
@@ -90,7 +91,7 @@ Interface/AddOns/ManastormGroupFinder/
 └── UI.lua
 ```
 
-If you downloaded the repository with GitHub's green *Code → Download ZIP* button instead, you will get `ManastormGroupFinder-main`. **Rename it to `ManastormGroupFinder`** or the game will not load it.
+If you downloaded the repository with the green *Code → Download ZIP* button, or *Source code (zip)* from a release, you will get `ManastormGroupFinder-main` or `ManastormGroupFinder-2.3` instead. **Rename it to `ManastormGroupFinder`** or the game will not load it.
 
 ---
 
@@ -116,6 +117,7 @@ Settings and rows are saved per character.
 | **Aura** / **Aura req** | Aura of Experience, see below |
 | **Looms** / **Looms req** | Heirlooms, see below |
 | **Lvl** | Level if the message states one, otherwise `?` |
+| **W** | One click whisper. Sends your saved line to that player, then reads `sent` |
 | **Message** | The original line, verbatim, expanding as you widen the window |
 
 Click a header to sort, click again to reverse. Left click **Role**, **Aura**, **Looms** or **Lvl** to edit; role and yes/no cells cycle, level opens a small box where **Enter** saves and **Escape** cancels. Edited values turn white and are never overwritten by the parser.
@@ -126,15 +128,25 @@ Drag the bottom-right corner to resize. The **Message** column takes all the spa
 
 ## How a message is classified
 
-A line must reference Manastorm at all, then the addon decides which side the sender is on by **where the intent word sits relative to the role words**:
+A line must reference Manastorm at all, then the addon decides which side the sender is on with two rules.
+
+**1. What the looking-for token points at.** `LF MS` means *looking for Manastorm*, so the sender wants a group — any role named afterwards is their own role. `LF DPS` points at a person, so the sender is filling a group.
+
+**2. Where the roles sit**, when the object is not decisive. A role before the token describes the sender, a role after it is being recruited.
+
+Recruit signals override rule 1: an explicit headcount (`LF 2 DPS for MS`), a leader phrase (`pst`, `pm info`, `invite bot`, `w me`) or a progress fraction (`13/15`, `2/2 tanks`) keeps the post in LFM.
 
 | Message | Tab | Why |
 | --- | --- | --- |
 | `LFM MS15 need tank` | LFM | `LFM` is a recruit marker |
 | `LF2M MS tanks` | LFM | `LF<number>M` counts players wanted |
 | `MS 14/15 PM with level` | LFM | Progress fraction means a group being filled |
+| `LF MS DPS` | LFG | `lf` points at Manastorm, so `dps` is the sender's own role |
+| `LF MS dps 33` | LFG | Same, with the sender's level |
+| `LF MS FARM - LVL 47 DPS full heirloom` | LFG | Same, plus a self advert |
+| `LF 60 Dps for MS Duo push` | LFM | `lf` points at a role, so a player is wanted |
 | `dps lf ms` | LFG | Role stated *before* the intent word - advertising yourself |
-| `LF MS15 DPS AURA` | LFG | Manastorm sought, role is what the sender is |
+| `LF MS15 DPS AURA ... PM INFO` | LFM | Manastorm object, but `pm info` is leader wording |
 | `Tank LF MS farm, send invite` | LFG | Asking to be invited |
 | `MS need tank + 1 aura` | LFM | `need` plus a role after it |
 | `MS` | Unsure | Not enough to judge |
@@ -170,6 +182,36 @@ Negation is read word by word and carries across a list, so `dps lf ms no aura l
 Moving a row between tabs recomputes both cells for the new tab's meaning, unless you edited them yourself. Clicking a cell cycles **no → maybe → yes**.
 
 **Level** stays `?` unless the message states one, because Manastorm callers rarely bother.
+
+---
+
+## One click whisper
+
+Each row carries a narrow **W** cell between **Lvl** and **Message**. Left click it and the addon whispers that player immediately with your saved line. The cell turns green and reads `sent`, so you can see who you already contacted.
+
+Write the lines with the **Whisper...** button at the bottom of the window, or `/msgf whisper`. There is one line per tab, because the two situations need different wording:
+
+- **LFM tab** - what you say to a leader who is filling a group
+- **LFG tab** - what you say to a player who wants a group
+
+Placeholders are filled in at the moment you click:
+
+| Token | Value |
+| --- | --- |
+| `{name}` | The listed player |
+| `{role}` | Their role as shown in the table |
+| `{level}` | Their level, `?` when unknown |
+| `{aura}` / `{looms}` | `yes`, `no` or `maybe` as shown |
+| `{size}` | Group size when the message states one |
+| `{myname}` / `{mylevel}` | Your character name and level |
+
+Example for the LFM tab:
+
+```
+Hi {name}, lvl {mylevel} dps with looms and aura, room in your MS?
+```
+
+Nothing is ever sent by itself. One click sends one whisper, and hovering a row shows the exact text first.
 
 ---
 
@@ -236,6 +278,8 @@ Whisper, invite, who, friend and ignore work from the name alone. Inspect, trade
 | `/msgf alert test` | Fire a sample alert |
 | `/msgf expiry <seconds>` | How long a row survives, default 900 |
 | `/msgf own` | Include your own messages |
+| `/msgf whisper` | Open the whisper template setup |
+| `/msgf whisper lfm <text>` \| `lfg <text>` | Set a tab's whisper line |
 | `/msgf debug` | Print every captured line and why it was kept or dropped |
 | `/msgf stats` | Events seen, gated, stored, errors |
 | `/msgf test <message>` | Run a line through the parser without waiting for it in chat |

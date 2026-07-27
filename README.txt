@@ -2,15 +2,20 @@ Manastorm Group Finder 2.3
 WoW 3.3.5a clients, including Project Ascension.
 
 *** THE FOLDER MUST BE NAMED  ManastormGroupFinder  ***
-If you downloaded the source code, your extracted folder is called
-ManastormGroupFinder-main or ManastormGroupFinder-2.3. RENAME IT to
+On the Releases page, download ManastormGroupFinder.zip from the Assets list,
+NOT "Source code (zip)". The Assets file extracts with the correct folder name
+and needs no renaming.
+
+Anything else - "Source code (zip)", the green Code button, a tag download -
+gives you a folder called ManastormGroupFinder-2.3 or -main. RENAME IT to
 ManastormGroupFinder before putting it in Interface\AddOns, or the game
 silently ignores it and it never shows up in your addon list. The client
 requires the folder name to match ManastormGroupFinder.toc, so any suffix
-breaks it. The zip from the Releases page already has the right name.
+breaks it.
 
   Interface\AddOns\ManastormGroupFinder\ManastormGroupFinder.toc      loads
   Interface\AddOns\ManastormGroupFinder-2.3\ManastormGroupFinder.toc  ignored
+  Interface\AddOns\ManastormGroupFinder-main\ManastormGroupFinder.toc ignored
 
 WHY 1.0 FOUND NOTHING
 This build captures chat twice. It registers the chat events, and it also
@@ -77,6 +82,33 @@ Recruit posts are far scarcer than offers, so an LFM alert holds on screen
 Picking one switches the tab and the alert scope together, so you do not have
 to set them separately.
 
+WHISPER BUTTON
+  Every row has a narrow W column between Lvl and Message. Left click it and
+  the addon sends your saved line to that player as a whisper, at once. The
+  cell then turns green and reads "sent", so you can see who you contacted.
+
+  Press the "Whisper..." button at the bottom of the window to write the
+  lines, or use /msgf whisper. There is one line per tab:
+    LFM tab - what you say to a leader who is filling a group
+    LFG tab - what you say to a player who wants a group
+
+  Placeholders are replaced at the moment you click:
+    {name}    the listed player
+    {role}    their role as shown in the table
+    {level}   their level, ? when unknown
+    {aura}    yes, no or maybe as shown
+    {looms}   yes, no or maybe as shown
+    {size}    group size when the message states one
+    {myname}  your character name
+    {mylevel} your level
+
+  Example for the LFM tab:
+    Hi {name}, lvl {mylevel} dps with looms and aura, room in your MS?
+
+  Nothing is ever sent on its own. One click, one whisper. Hover a row to see
+  the exact text before you send it.
+
+
 ALERT POPUP
 The frame is measured against the text, so a short line gets a small frame.
 Width runs from 220 to 520 pixels and the height follows the wrapped text.
@@ -118,18 +150,32 @@ Then, in order:
      lf tank, 2 more, 1 spot
   3. Direct invite request -> LFG
      inv me, invite pls, can i join, lf inv, add me
-  4. A role plus any lf token -> LFG
+  4. What the lf token points at -> LFG
+     lf ms, lf ms dps, lf ms farm, lf manastorm, lf group, lf grp, lf raid,
+     lf ms15, searching for ms. The object beats word order: in LF MS DPS the
+     sender is looking for the group, so dps is their own role.
+  5. A role plus any lf token -> LFG
      dps lf ms, tank with aura lf ms, healer lf ms lvling, aoe dps lg ms,
      small dps lf grupe ms
-  5. lfm, forming, spots left, pst for inv -> LFM
-  6. lfg, lf group, lf grp, lf grupe, lg ms, plus1 -> LFG
-  7. A role plus a self advertisement, no lf token -> LFG
+  6. lfm, forming, spots left, pst for inv -> LFM
+  7. lfg, lf group, lf grp, lf grupe, lg ms, plus1 -> LFG
+  8. A role plus a self advertisement, no lf token -> LFG
      full looms gigadps prestiged dps, tank w/aura
-  8. Anything else -> Unsure
-Word order does the work: lf dps means recruiting, dps lf means offering.
+  9. Anything else -> Unsure
+Two rules do the work. First, what the lf token points at: a group word means
+the sender wants in, a role or a headcount means they are filling a group.
+Second, where the roles sit: lf dps recruits, dps lf offers.
+
+Recruit signals still beat the object rule, so LF MS keeps its place in LFM
+when the line also carries a headcount (LF 2 DPS for MS), a leader phrase
+(pst, pm info, invite bot, w me) or a progress fraction (13/15, 2/2 tanks).
 
 How the position rule reads real lines:
-  LF MS15 DPS AURA, TANK LOOM PM INFO    two roles after lf, leader  -> LFM
+  LF MS dps 33                            lf points at ms            -> LFG
+  LF MS DPS                               lf points at ms            -> LFG
+  LF MS FARM - LVL 47 DPS full heirloom   lf points at ms            -> LFG
+  LF 60 Dps for MS Duo push               lf points at a role        -> LFM
+  LF MS15 DPS AURA, TANK LOOM PM INFO    ms object but leader words  -> LFM
   LF MS leveling, dps w/ looms           one role after, self ad     -> LFG
   2 dps full looms & aura w aoe LF MS    roles before lf             -> LFG
   LF 49 DPS w. Aura/Looms LF MS          49 is a level, not a count  -> LFG

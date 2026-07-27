@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.5
+
+- New **W** column between **Lvl** and **Message**. Left click sends your saved whisper to that player at once, and the cell then reads `sent` in green.
+- Whisper templates, one line per tab, set with the **Whisper...** button at the bottom of the window or `/msgf whisper`. LFM wording and LFG wording are kept apart.
+- Placeholders filled in at click time: `{name}`, `{role}`, `{level}`, `{aura}`, `{looms}`, `{size}`, `{myname}`, `{mylevel}`.
+- Hovering a row previews the exact whisper text and the time an earlier one was sent.
+- New commands `/msgf whisper`, `/msgf whisper lfm <text>`, `/msgf whisper lfg <text>`.
+
+## 2.4
+- **Fixed the biggest classification error: `LF MS` now means LFG.** What the looking-for token points at decides the side, and that beats the role-position rule. `LF MS DPS`, `LF MS dps 33`, `LF MS FARM`, `searching for ms` are all offers, not recruit posts.
+- A role named after `lf ms` is now read as the sender's own role, not as a role being recruited.
+- Recruit signals still win over the new rule: an explicit headcount (`LF 2 DPS for MS`), a leader phrase (`pst`, `pm info`, `invite bot`, `w me`), or a progress fraction (`13/15`, `2/2 tanks`) keeps the post in LFM.
+- Group objects recognised after the token: `ms`, `manastorm`, `ms15`, `group`, `grp`, `party`, `raid`, `run`, `farm`, `spam`, `loop`, `push`, `carry`, `leveling`, `duo`, `trio`, with filler words such as `for`, `a`, `the`, `big`, `giga` skipped.
+- Group size read from `duo` and `trio` as 2 and 3.
+
 ## 2.3
 - Aura and looms are now read per tab. On **LFG** and **Unsure** a mention means **yes**, since the sender is advertising what they bring. On **LFM** a mention means **maybe**, since a leader naming aura or looms may mean a requirement, a nice to have, or what the group already carries. An explicit negative is always **no**.
 - Clicking an aura or looms cell cycles **no -> maybe -> yes** and locks the value.
