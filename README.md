@@ -250,6 +250,27 @@ Test it any time with `/msgf alert test`.
 
 ---
 
+## Suggest Invite
+
+Ascension refuses `InviteUnit` when you are in a group without rank, and offers **Suggest Invite** instead, which sends the group leader a popup to accept or deny.
+
+The row menu reads your party or raid state at the moment you right click:
+
+| Your state | Menu entry |
+| --- | --- |
+| Solo | **Invite** |
+| Party leader | **Invite** |
+| Raid leader or assistant | **Invite** |
+| In a group with no rank | **Suggest Invite** |
+
+Raid assistants keep **Invite**, because the server lets them invite. A plain leader test would have got that wrong.
+
+Tested on Ascension on 28 July 2026. The client exposes a global `SuggestInvite`, it takes a plain player name, and the group leader receives the accept or deny popup. The addon calls it directly, so one click in a row reaches a player anywhere on the server, with no targeting and no chat spam. The addon prints a confirmation line naming the function it used.
+
+If a future client build renames the function, the lookup falls back to `SuggestInviteByName`, `SuggestInviteUnit`, `SuggestGroupInvite`, `SuggestPartyInvite`, then any global whose name contains suggest and invite, then a slash command registered by the client. `RequestInvite` is never called, even though it exists, because requesting an invite for yourself is a different action.
+
+Two diagnostics ship with the addon: `/msgf probe` lists every suggest related function, slash command, menu button and dialog the client exposes, plus the route used last, and `/msgf group` prints the raw party and raid state.
+
 ## Right-click menu
 
 Right click **anywhere** in a row:

@@ -1,4 +1,4 @@
--- Manastorm Group Finder 2.5
+-- Manastorm Group Finder 2.7
 -- Core.lua - chat capture, storage, filters, whisper templates, slash commands.
 
 MSGF = MSGF or {}
@@ -553,6 +553,8 @@ local function printHelp()
 		"/msgf stats - capture counters and last error",
 		"/msgf whisper - set the one click whisper line for each tab",
 		"/msgf whisper lfm <text> - set the LFM line, lfg <text> for the LFG line",
+		"/msgf group - what the client says about your party or raid rank",
+		"/msgf probe - list the suggest invite entry points this client exposes",
 		"/msgf test <message> - parse a line without sending it",
 	}
 	for i = 1, #lines do
@@ -734,6 +736,18 @@ SlashCmdList["MANASTORMGF"] = function(msg)
 		handleAlert(rest)
 	elseif cmd == "whisper" then
 		handleWhisper(rest)
+	elseif cmd == "probe" then
+		if MSGF.Probe then
+			MSGF.Probe()
+		else
+			MSGF.Print("probe is not loaded")
+		end
+	elseif cmd == "group" then
+		if MSGF.PrintGroupState then
+			MSGF.PrintGroupState()
+		else
+			MSGF.Print("group state is not loaded")
+		end
 	elseif cmd == "expiry" then
 		local v = tonumber(rest)
 		if v and v >= 60 then

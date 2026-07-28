@@ -58,6 +58,33 @@ Left click Lvl, type a number, press Enter. Clicking anywhere else also
 saves and closes the editor, Escape cancels.
 Edited values turn blue and lock, so later messages never overwrite them.
 
+SUGGEST INVITE
+  On Ascension, a player who is in a group without rank cannot invite. The
+  client offers "Suggest Invite" instead, which sends the group leader a
+  popup to accept or deny.
+
+  The row menu now follows that rule. It reads your party or raid state at the
+  moment you right click:
+    solo, party leader, raid leader, raid assistant  ->  Invite
+    in a group with no rank                          ->  Suggest Invite
+
+  Raid assistants keep Invite, because the server lets them invite.
+
+  Tested on Ascension on 28 July 2026. The addon calls the client function
+  SuggestInvite with the player name, the leader gets the accept or deny
+  popup, and the addon prints a confirmation line in chat. One click, no
+  targeting, no chat spam, and the player does not have to be near you.
+
+  If a future client build renames the function, the addon looks for four
+  other likely names, then any global whose name contains suggest and invite,
+  then a slash command. It never calls RequestInvite, because asking for an
+  invite for yourself is a different action.
+
+  Two diagnostics stay in the build:
+    /msgf group - the raw party and raid state the client reports
+    /msgf probe - which suggest entry points exist, and which one was used
+
+
 RIGHT CLICK ANYWHERE IN A ROW
 Whisper, Invite, Target, Inspect, Trade, Follow, Duel, Who, Add friend,
 Ignore, Copy name, Remove row.

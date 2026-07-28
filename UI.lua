@@ -1,4 +1,4 @@
--- Manastorm Group Finder 2.6
+-- Manastorm Group Finder 2.8
 -- UI.lua - window, table, editing, player menu, filters, whisper, minimap button.
 
 MSGF = MSGF or {}
@@ -127,6 +127,19 @@ local function showCopyBox(name)
 	copyFrame.box:SetFocus()
 end
 
+-- The server refuses InviteUnit when you are in a group without rank, so the
+-- row offers the client's own suggestion instead. State is read at click time.
+local function inviteEntry(name)
+	if MSGF.CanInvite and not MSGF.CanInvite() then
+		return { text = "Suggest Invite", notCheckable = true, func = function()
+			MSGF.SuggestInvite(name)
+		end }
+	end
+	return { text = "Invite", notCheckable = true, func = function()
+		InviteUnit(name)
+	end }
+end
+
 local function openPlayerMenu(bucket, name, anchor)
 	if not menuFrame then
 		menuFrame = CreateFrame("Frame", "MSGF_MenuFrame", UIParent, "UIDropDownMenuTemplate")
@@ -136,9 +149,7 @@ local function openPlayerMenu(bucket, name, anchor)
 		{ text = "Whisper", notCheckable = true, func = function()
 			ChatFrame_OpenChat("/w " .. name .. " ", DEFAULT_CHAT_FRAME)
 		end },
-		{ text = "Invite", notCheckable = true, func = function()
-			InviteUnit(name)
-		end },
+		inviteEntry(name),
 		{ text = "Target", notCheckable = true, func = function()
 			ensureTarget(name)
 		end },

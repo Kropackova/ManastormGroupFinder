@@ -2,10 +2,11 @@
 ## Title: Manastorm Group Finder
 ## Notes: Scans chat for Manastorm LFM and LFG messages and lists them in a sortable table.
 ## Author: built for Petr
-## Version: 2.6
+## Version: 2.8
 ## SavedVariablesPerCharacter: MSGF_DB
 
 Parser.lua
 Core.lua
+Compat.lua
 Alerts.lua
 UI.lua

@@ -1,5 +1,25 @@
 # Changelog
 
+## 2.8
+
+- **Suggest Invite confirmed working.** Tested on Ascension on 28 July 2026: the client global `SuggestInvite` takes a plain player name, and the group leader receives the accept or deny popup. The row menu calls it directly, so one click reaches a player anywhere on the server.
+- Removed the temporary **Player menu** entry. It was the fallback while the entry point was unknown, and it is no longer needed.
+- `Compat.lua` keeps the name scans as a safety net in case a future client build renames the function, and still refuses to call `RequestInvite`.
+- `/msgf group` and `/msgf probe` stay in the build as diagnostics.
+
+## 2.7.1
+
+- Menu entry renamed to **Suggest Invite**, the client's exact wording.
+- Five exact function names are now checked before the generic scan: `SuggestInvite`, `SuggestInviteByName`, `SuggestInviteUnit`, `SuggestGroupInvite`, `SuggestPartyInvite`. `/msgf probe` prints the result of every check by name.
+- `RequestInvite` and similar names are reported but never called. Requesting an invite for yourself is a different action.
+
+## 2.7
+
+- Row menu now respects Ascension's invite rules. In a group without rank the **Invite** entry becomes **Suggest an invite**, which asks the group leader through the client's own accept or deny popup. Raid assistants keep **Invite**, because the server lets them invite.
+- New **Player menu** entry opens the real player menu for that name, the same one you get by right clicking a name in chat. Everything the client adds to that menu is reachable from a row.
+- New `/msgf probe`, which lists every suggest related function, slash command, menu button and dialog the client exposes, and `/msgf group`, which prints the raw party and raid state.
+- New file `Compat.lua`. It assumes no function names. Entry points are looked up in the running client and cached, and the player menu is the fallback when no direct call exists.
+
 ## 2.6
 
 - Fixed the whisper panel: the LFG template box drew without its background because the stock input box art only rendered on the first box. Both boxes are now built with their own solid backdrop and look identical.
