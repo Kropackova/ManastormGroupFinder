@@ -1,5 +1,31 @@
 # Changelog
 
+## 3.0.3
+
+- The bell tooltip now redraws on click, so it switches between "On" and "Muted" under the cursor instead of waiting for you to leave the button and come back. It also carries a "Click to mute" or "Click to unmute" line.
+- The bell is drawn at 87 percent of the button, centred, so it no longer touches the edges. The red cross uses the same box.
+
+## 3.0.2
+
+- The bell is brighter. While alerts are off it was drawn at 40 percent opacity, which washed it out against the window frame. It is now 85 percent off and 100 percent on.
+
+## 3.0.1
+
+- The wave arcs are gone. `VOICECHAT-ON` holds its arcs off centre and small inside its own file, so they cannot be lined up with the bell without guessing at texture coordinates. Sound on is now a plain bright bell, muted is a desaturated bell under the red cross, which does fill the button.
+
+## 3.0
+
+- **Speaker icon fixed.** The stock `VOICECHAT` art is an overlay set, so `VOICECHAT-ON` is only the wave arcs and `VOICECHAT-MUTED` is only the red cross. Neither file contains a speaker. The button now draws a bell icon of its own and puts the arcs or the cross on top of it. Muted also desaturates the bell.
+- **The Whisper button is a switch.** A second click closes the template panel and keeps whatever is typed, the same as the Close button.
+- **The alert frame is washed blue while unlocked**, with a blue border and a "Move me" heading, so the draggable state is obvious at a glance. The wash clears when it is locked.
+
+## 2.9
+
+- **Fixed a Lua error on login.** `MSGF_ScrollBar` inherits `UIPanelScrollBarTemplate`, whose stock handler calls `SetVerticalScroll` on its parent. Our parent is a plain frame, not a scroll frame, and the first `SetValue(0)` ran before our own handler replaced the inherited one. The handler is now installed immediately after the frame is created, before any value is set. The error was cosmetic, but it had been there since 1.0.
+- **The alert popup can be moved.** Right click the minimap button to unlock it, drag the sample alert where you want it, right click again to lock. The position is saved per character. Real alerts are suppressed while it is unlocked.
+- **Speaker icon next to the Alerts button.** It mutes the alert sound, so an alert is either a silent popup or a popup with a sound. The Alerts button now only switches alerts on and off.
+- New commands: `/msgf alert move` and `/msgf alert reset`.
+
 ## 2.8
 
 - **Suggest Invite confirmed working.** Tested on Ascension on 28 July 2026: the client global `SuggestInvite` takes a plain player name, and the group leader receives the accept or deny popup. The row menu calls it directly, so one click reaches a player anywhere on the server.

@@ -1,4 +1,4 @@
--- Manastorm Group Finder 2.8
+-- Manastorm Group Finder 3.0.3
 -- UI.lua - window, table, editing, player menu, filters, whisper, minimap button.
 
 MSGF = MSGF or {}
@@ -429,10 +429,38 @@ function MSGF.Refresh()
 		end
 	end
 	countText:SetText(#currentList .. " of " .. #(MSGF_DB.rows[mode] or {}) .. " shown")
-	if alertsButton then
-		alertsButton:SetText("Alerts: " .. (MSGF_DB.alert.enabled and "ON" or "OFF"))
-	end
+	MSGF.UpdateAlertButtons()
 	updateRows()
+end
+
+-- Alerts button text plus the speaker icon next to it.
+function MSGF.UpdateAlertButtons()
+	local a = MSGF_DB and MSGF_DB.alert
+	if not a then
+		return
+	end
+	if alertsButton then
+		alertsButton:SetText("Alerts: " .. (a.enabled and "ON" or "OFF"))
+	end
+	if soundButton then
+		-- Sound on is a bright bell. Muted is the same bell desaturated, with the
+		-- stock red cross over it. VOICECHAT-MUTED is only the cross, so it fills
+		-- the button cleanly.
+		local icon = soundButton:GetNormalTexture()
+		if icon and icon.SetDesaturated then
+			icon:SetDesaturated(not a.sound)
+		end
+		if soundButton.cross then
+			if a.sound then
+				soundButton.cross:Hide()
+			else
+				soundButton.cross:Show()
+			end
+		end
+		-- Only a slight dim while alerts are off. The bell still has to be legible
+		-- against the window frame.
+		soundButton:SetAlpha(a.enabled and 1 or 0.85)
+	end
 end
 
 function MSGF.RefreshTimes()
@@ -683,6 +711,17 @@ function MSGF.ShowWhisperSetup()
 	whisperPanel.lfmBox:SetText(MSGF.WhisperTemplate("LFM") or "")
 	whisperPanel.lfgBox:SetText(MSGF.WhisperTemplate("LFG") or "")
 	whisperPanel:Show()
+end
+
+-- The Whisper button is a switch, so a second click closes the panel. Whatever
+-- is typed is kept, the same as the Close button does.
+function MSGF.ToggleWhisperSetup()
+	if whisperPanel and whisperPanel:IsShown() then
+		saveWhisperPanel()
+		whisperPanel:Hide()
+		return
+	end
+	MSGF.ShowWhisperSetup()
 end
 
 -- Filters panel -------------------------------------------------------------
@@ -990,42 +1029,83 @@ local function createWindow()
 	alertsButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 	alertsButton:SetWidth(96)
 	alertsButton:SetHeight(22)
-	alertsButton:SetPoint("TOPRIGHT", -PAD, -46)
+	alertsButton:SetPoint("TOPRIGHT", -PAD - 26, -46)
 	alertsButton:SetText("Alerts: OFF")
-	alertsButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
-	alertsButton:SetScript("OnClick", function(self, button)
-		if button == "RightButton" then
-			local a = MSGF_DB.alert
-			if a.sound and not a.chat then
-				a.chat = true
-			elseif a.sound and a.chat then
-				a.sound = false
-			else
-				a.sound = true
-				a.chat = false
-			end
-			MSGF.Print("alert output: popup on, sound " .. (a.sound and "on" or "off")
-				.. ", chat " .. (a.chat and "on" or "off"))
-		else
-			MSGF_DB.alert.enabled = not MSGF_DB.alert.enabled
-			MSGF.Print("alerts " .. (MSGF_DB.alert.enabled and "on" or "off"))
-		end
+	alertsButton:RegisterForClicks("LeftButtonUp")
+	alertsButton:SetScript("OnClick", function(self)
+		MSGF_DB.alert.enabled = not MSGF_DB.alert.enabled
+		MSGF.Print("alerts " .. (MSGF_DB.alert.enabled and "on" or "off"))
 		MSGF.Refresh()
 	end)
 	alertsButton:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_LEFT")
 		GameTooltip:AddLine("Alerts")
-		GameTooltip:AddLine("Left click switches alerts on or off.", 1, 1, 1)
-		GameTooltip:AddLine("Right click cycles sound and chat output.", 1, 1, 1)
+		GameTooltip:AddLine("Click switches alerts on or off.", 1, 1, 1)
 		GameTooltip:AddLine("A new row matching the filters pops up on screen.", 0.7, 0.7, 0.7)
+		GameTooltip:AddLine("Right click the minimap button to move the popup.", 0.7, 0.7, 0.7)
 		GameTooltip:Show()
 	end)
 	alertsButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+	-- Speaker. The popup is always shown when alerts are on. This only decides
+	-- whether the popup is silent or comes with a sound.
+	soundButton = CreateFrame("Button", nil, frame)
+	soundButton:SetWidth(22)
+	soundButton:SetHeight(22)
+	soundButton:SetPoint("LEFT", alertsButton, "RIGHT", 4, 0)
+	soundButton:SetHighlightTexture("Interface\\Buttons\\ButtonHilight-Square", "ADD")
+	soundButton:SetNormalTexture("Interface\\Icons\\INV_Misc_Bell_01")
+	local speaker = soundButton:GetNormalTexture()
+	if speaker then
+		speaker:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+		-- 87 percent of the button, centred. 22 x 0.87 is 19.1, so the inset is
+		-- 1.4 on every side.
+		speaker:ClearAllPoints()
+		speaker:SetPoint("TOPLEFT", soundButton, "TOPLEFT", 1.4, -1.4)
+		speaker:SetPoint("BOTTOMRIGHT", soundButton, "BOTTOMRIGHT", -1.4, 1.4)
+	end
+	-- VOICECHAT-ON is dropped. The arcs sit off centre inside their own file and
+	-- fill only part of it, so they cannot be lined up with the bell without
+	-- guessing at texture coordinates. Sound on is a bright bell instead.
+	soundButton.cross = soundButton:CreateTexture(nil, "OVERLAY")
+	soundButton.cross:SetTexture("Interface\\COMMON\\VOICECHAT-MUTED")
+	soundButton.cross:SetPoint("TOPLEFT", soundButton, "TOPLEFT", 1.4, -1.4)
+	soundButton.cross:SetPoint("BOTTOMRIGHT", soundButton, "BOTTOMRIGHT", -1.4, 1.4)
+	soundButton.cross:Hide()
+
+	-- One builder, used by OnEnter and again by OnClick, so the text follows the
+	-- state without the cursor having to leave the button and come back.
+	local function soundTooltip()
+		GameTooltip:SetOwner(soundButton, "ANCHOR_LEFT")
+		GameTooltip:AddLine("Alert sound")
+		GameTooltip:AddLine(MSGF_DB.alert.sound
+			and "On. The popup comes with a sound."
+			or "Muted. The popup appears silently.", 1, 1, 1)
+		GameTooltip:AddLine("Click to " .. (MSGF_DB.alert.sound and "mute." or "unmute."), 0.7, 0.7, 0.7)
+		GameTooltip:Show()
+	end
+
+	soundButton:SetScript("OnClick", function()
+		MSGF_DB.alert.sound = not MSGF_DB.alert.sound
+		MSGF.Print("alert sound " .. (MSGF_DB.alert.sound and "on" or "off"))
+		if MSGF_DB.alert.sound then
+			PlaySound("RaidWarning")
+		end
+		MSGF.UpdateAlertButtons()
+		if GetMouseFocus and GetMouseFocus() == soundButton then
+			soundTooltip()
+		end
+	end)
+	soundButton:SetScript("OnEnter", function()
+		soundTooltip()
+	end)
+	soundButton:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
 	filtersButton = CreateFrame("Button", nil, frame, "UIPanelButtonTemplate")
 	filtersButton:SetWidth(80)
 	filtersButton:SetHeight(22)
 	filtersButton:SetPoint("RIGHT", alertsButton, "LEFT", -6, 0)
+	-- Room on the right for the speaker button.
 	filtersButton:SetText("Filters")
 	filtersButton:SetScript("OnClick", toggleFilterPanel)
 
@@ -1079,12 +1159,9 @@ local function createWindow()
 	end
 
 	scrollBar = CreateFrame("Slider", "MSGF_ScrollBar", frame, "UIPanelScrollBarTemplate")
-	scrollBar:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -PAD + 2, -100)
-	scrollBar:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -PAD + 2, PAD + 40)
-	scrollBar:SetWidth(16)
-	scrollBar:SetMinMaxValues(0, 0)
-	scrollBar:SetValueStep(1)
-	scrollBar:SetValue(0)
+	-- The stock template assumes its parent is a ScrollFrame and calls
+	-- parent:SetVerticalScroll() on every value change. Our parent is a plain
+	-- frame, so the inherited handler is replaced before any value is set.
 	scrollBar:SetScript("OnValueChanged", function(self, value)
 		local newOffset = math.floor((value or 0) + 0.5)
 		if newOffset ~= offset then
@@ -1094,6 +1171,12 @@ local function createWindow()
 			end
 		end
 	end)
+	scrollBar:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -PAD + 2, -100)
+	scrollBar:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -PAD + 2, PAD + 40)
+	scrollBar:SetWidth(16)
+	scrollBar:SetMinMaxValues(0, 0)
+	scrollBar:SetValueStep(1)
+	scrollBar:SetValue(0)
 
 	-- Rows
 	for i = 1, MAX_ROWS do
@@ -1169,7 +1252,7 @@ local function createWindow()
 	whisperButton:SetPoint("LEFT", clearButton, "RIGHT", 6, 0)
 	whisperButton:SetText("Whisper...")
 	whisperButton:SetScript("OnClick", function()
-		MSGF.ShowWhisperSetup()
+		MSGF.ToggleWhisperSetup()
 	end)
 	whisperButton:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
@@ -1275,9 +1358,10 @@ local function createMinimapButton()
 	minimapButton:RegisterForClicks("LeftButtonUp", "RightButtonUp")
 	minimapButton:SetScript("OnClick", function(self, button)
 		if button == "RightButton" then
-			MSGF_DB.alert.enabled = not MSGF_DB.alert.enabled
-			MSGF.Print("alerts " .. (MSGF_DB.alert.enabled and "on" or "off"))
-			MSGF.Refresh()
+			-- Unlock the alert popup so it can be dragged. Right click again to lock.
+			if MSGF.ToggleAlertLock then
+				MSGF.ToggleAlertLock()
+			end
 		else
 			MSGF.Toggle()
 		end
@@ -1286,7 +1370,7 @@ local function createMinimapButton()
 		GameTooltip:SetOwner(self, "ANCHOR_LEFT")
 		GameTooltip:AddLine("Manastorm Group Finder")
 		GameTooltip:AddLine("Left click opens the list.", 1, 1, 1)
-		GameTooltip:AddLine("Right click switches alerts.", 1, 1, 1)
+		GameTooltip:AddLine("Right click unlocks the alert popup so you can drag it.", 1, 1, 1)
 		GameTooltip:AddLine("Drag to move around the minimap.", 0.7, 0.7, 0.7)
 		GameTooltip:Show()
 	end)

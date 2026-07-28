@@ -1,7 +1,11 @@
--- Manastorm Group Finder 2.3
+-- Manastorm Group Finder 3.0
 -- Alerts.lua - on screen notification. The frame is sized to the text, it
 -- appears in place with a very short fade, holds, then fades out. Recruit
 -- posts are rare, so those alerts hold two and a half times longer.
+--
+-- The frame can be unlocked and dragged. The position is stored per character
+-- as the centre point of the frame, so the frame still grows around that point
+-- when a long message arrives.
 
 MSGF = MSGF or {}
 
@@ -22,12 +26,37 @@ local MAX_W = 520
 local queue = {}
 local popup, driver
 local phase, timer, holdFor = nil, 0, HOLD_TIME
+local unlocked = false
 
 local BUCKET_COLOR = {
 	LFM = "|cff40ff90",
 	LFG = "|cff40c0ff",
 	UNSURE = "|cffaaaaaa",
 }
+
+-- Saved position. Built on demand so an older saved variables file still works.
+local function posDB()
+	MSGF_DB = MSGF_DB or {}
+	MSGF_DB.alert = MSGF_DB.alert or {}
+	if type(MSGF_DB.alert.pos) ~= "table" then
+		MSGF_DB.alert.pos = { hasPos = false, x = 0, y = 0 }
+	end
+	return MSGF_DB.alert.pos
+end
+
+local function savePosition()
+	if not popup then
+		return
+	end
+	local cx, cy = popup:GetCenter()
+	if not cx or not cy then
+		return
+	end
+	local p = posDB()
+	p.x = cx
+	p.y = cy
+	p.hasPos = true
+end
 
 local function createPopup()
 	popup = CreateFrame("Frame", "MSGF_Alert", UIParent)
@@ -40,7 +69,27 @@ local function createPopup()
 		tile = true, tileSize = 32, edgeSize = 20,
 		insets = { left = 6, right = 6, top = 6, bottom = 6 },
 	})
+	-- Mouse is off while locked, so a real alert never eats a click.
 	popup:EnableMouse(false)
+	popup:SetMovable(true)
+	popup:RegisterForDrag("LeftButton")
+	popup:SetScript("OnDragStart", function(self)
+		if unlocked then
+			self:StartMoving()
+		end
+	end)
+	popup:SetScript("OnDragStop", function(self)
+		self:StopMovingOrSizing()
+		savePosition()
+	end)
+
+	-- Blue wash, shown only while the frame is unlocked, so it is obvious at a
+	-- glance that this frame can be dragged.
+	popup.moveTint = popup:CreateTexture(nil, "BORDER")
+	popup.moveTint:SetTexture(0.15, 0.45, 0.95, 0.35)
+	popup.moveTint:SetPoint("TOPLEFT", 6, -6)
+	popup.moveTint:SetPoint("BOTTOMRIGHT", -6, 6)
+	popup.moveTint:Hide()
 
 	popup.title = popup:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 	popup.title:SetPoint("TOP", popup, "TOP", 0, -PAD_TOP)
@@ -53,12 +102,17 @@ local function createPopup()
 	popup:Hide()
 end
 
--- Fixed spot: middle of the screen vertically, two thirds across. The frame
--- grows around that point, it never moves once it is shown.
+-- Saved spot if there is one, otherwise middle of the screen vertically, two
+-- thirds across. The frame grows around that point, it never moves once shown.
 local function placePopup()
+	local p = posDB()
+	popup:ClearAllPoints()
+	if p.hasPos then
+		popup:SetPoint("CENTER", UIParent, "BOTTOMLEFT", p.x, p.y)
+		return
+	end
 	local w = UIParent:GetWidth() or 1024
 	local h = UIParent:GetHeight() or 768
-	popup:ClearAllPoints()
 	popup:SetPoint("CENTER", UIParent, "BOTTOMLEFT", w * 0.66, h * 0.5)
 end
 
@@ -117,7 +171,61 @@ local function startNext()
 	timer = 0
 end
 
+-- Unlocked mode. The frame holds a sample message and can be dragged. Real
+-- alerts are ignored while it is unlocked, so the sample cannot be replaced
+-- under the cursor half way through a drag.
+function MSGF.AlertUnlocked()
+	return unlocked
+end
+
+function MSGF.SetAlertUnlocked(state)
+	if not popup then
+		createPopup()
+	end
+	unlocked = state and true or false
+	phase = nil
+	timer = 0
+	if unlocked then
+		popup:EnableMouse(true)
+		popup.moveTint:Show()
+		popup:SetBackdropBorderColor(0.35, 0.7, 1, 1)
+		popup.title:SetText("|cff66ccffMove me|r")
+		popup.body:SetText("Drag this frame where you want alerts to appear.")
+		fitPopup()
+		placePopup()
+		popup:SetAlpha(1)
+		popup:Show()
+		MSGF.Print("alert frame unlocked. drag it, then right click the minimap button to lock it.")
+	else
+		savePosition()
+		popup.moveTint:Hide()
+		popup:SetBackdropBorderColor(1, 1, 1, 1)
+		popup:EnableMouse(false)
+		popup:SetAlpha(0)
+		popup:Hide()
+		MSGF.Print("alert frame locked.")
+	end
+end
+
+function MSGF.ToggleAlertLock()
+	MSGF.SetAlertUnlocked(not unlocked)
+end
+
+function MSGF.ResetAlertPosition()
+	local p = posDB()
+	p.hasPos = false
+	p.x = 0
+	p.y = 0
+	if popup and popup:IsShown() then
+		placePopup()
+	end
+	MSGF.Print("alert frame back to the default spot.")
+end
+
 function MSGF.ShowAlert(row, bucket)
+	if unlocked then
+		return
+	end
 	if not popup then
 		createPopup()
 	end

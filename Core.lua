@@ -1,4 +1,4 @@
--- Manastorm Group Finder 2.7
+-- Manastorm Group Finder 3.0
 -- Core.lua - chat capture, storage, filters, whisper templates, slash commands.
 
 MSGF = MSGF or {}
@@ -28,7 +28,8 @@ local DEFAULTS = {
 		maxLevel = 0,
 		word = "",
 	},
-	alert = { enabled = false, sound = true, chat = false, popup = true, mode = "ANY" },
+	alert = { enabled = false, sound = true, chat = false, popup = true, mode = "ANY",
+		pos = { hasPos = false, x = 0, y = 0 } },
 	-- One line per tab, sent only when you click the W cell in a row.
 	whisper = {
 		lfm = "Hi {name}, lvl {mylevel} dps with looms and aura, room in your MS?",
@@ -547,6 +548,7 @@ local function printHelp()
 		"/msgf clear - clear the current tab, clearall - clear everything",
 		"/msgf minimap - show or hide the minimap button",
 		"/msgf alert on | off | sound | chat | popup | mode lfm|lfg|any",
+		"/msgf alert move - unlock the popup so you can drag it, /msgf alert reset puts it back",
 		"/msgf expiry 900 - seconds a row stays listed",
 		"/msgf own - include or exclude your own messages",
 		"/msgf debug - log every scanned chat line",
@@ -581,6 +583,14 @@ local function handleAlert(rest)
 	elseif cmd == "popup" then
 		a.popup = not a.popup
 		MSGF.Print("alert popup " .. (a.popup and "on" or "off"))
+	elseif cmd == "move" or cmd == "unlock" or cmd == "lock" then
+		if MSGF.ToggleAlertLock then
+			MSGF.ToggleAlertLock()
+		end
+	elseif cmd == "reset" then
+		if MSGF.ResetAlertPosition then
+			MSGF.ResetAlertPosition()
+		end
 	elseif cmd == "mode" then
 		local m = (value or ""):upper()
 		if m == "LFM" or m == "LFG" or m == "ANY" then

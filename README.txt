@@ -137,6 +137,24 @@ WHISPER BUTTON
 
 
 ALERT POPUP
+  Right click the minimap button to unlock the popup. A sample alert appears,
+  drag it anywhere, then right click the minimap button again to lock it. The
+  spot is saved per character. /msgf alert reset puts it back to the default,
+  two thirds across the screen at mid height.
+
+  Real alerts are held back while the frame is unlocked, so the sample cannot
+  be replaced under your cursor mid drag.
+
+  While unlocked the frame is washed blue with a blue border, so it is obvious
+  that it can be dragged. The wash disappears when you lock it.
+
+  The bell icon next to the Alerts button mutes the sound. Alerts are then a
+  silent popup. A bright bell means the sound is on, a grey bell under a red
+  cross means muted. The Alerts button itself switches alerts on and off.
+
+  The Whisper button is a switch. Click it again to close the template panel.
+
+ALERT POPUP (BEHAVIOUR)
 The frame is measured against the text, so a short line gets a small frame.
 Width runs from 220 to 520 pixels and the height follows the wrapped text.
 It appears at its final spot with a 0.1 second fade, no sliding and no

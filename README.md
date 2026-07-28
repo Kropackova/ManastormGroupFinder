@@ -234,9 +234,17 @@ The panel drives both the table and the alerts, so what you see is what you get 
 
 ---
 
+## Moving the alert popup
+
+Right click the minimap button to unlock the popup. A sample alert appears, drag it anywhere on screen, then right click the minimap button again to lock it. The spot is saved per character. `/msgf alert reset` puts it back to the default, two thirds across the screen at mid height. Real alerts are held back while the frame is unlocked, so the sample cannot be replaced under your cursor mid drag.
+
+While unlocked, the frame is washed blue with a blue border and a **Move me** heading, so the draggable state is obvious at a glance. The wash clears when you lock it.
+
+The bell icon next to the **Alerts** button mutes the sound. A bright bell means the sound is on, a grey bell under a red cross means muted. An alert is then a silent popup. The **Alerts** button itself only switches alerts on and off.
+
 ## Alerts
 
-Left click **Alerts** to toggle them, right click to cycle sound and chat output. When a new row passes your filters:
+Click **Alerts** to switch them on or off, and use the bell next to it to mute the sound. When a new row passes your filters:
 
 - the original message appears at mid height, two thirds across the screen
 - the frame is measured against the text, so short lines get a small frame
